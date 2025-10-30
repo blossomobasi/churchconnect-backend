@@ -26,6 +26,11 @@ enum DonationType {
   OTHER
 }
 
+enum Provider {
+  DEFAULT
+  GOOGLE
+}
+
 model User {
   id            String         @id @default(uuid())
   firstName     String
@@ -35,15 +40,46 @@ model User {
   phone         String?         @unique
   address       String?
   role          Role            @default(MEMBER)
-  sermons       Sermon[]
+  profileImageId String?
+  profileImage  File?           @relation(fields: [profileImageId], references: [id], onDelete: SetNull)
+  provider      Provider        @default(DEFAULT)
+  emailVerified Boolean         @default(false)
+  verificationOtp           String?
+  verificationOtpExpiresAt  DateTime?
+  passwordResetOtp          String?
+  passwordResetOtpExpiresAt DateTime?
   departmentId  String? 
   department    Department?     @relation(fields: [departmentId], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  refreshToken RefreshToken[]
+  sermons       Sermon[]
   donations     Donation[]
   attendances   Attendance[]
   prayerRequests PrayerRequest[]
   testimonies   Testimony[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id() @default(uuid())
+  token     String   @unique()
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model File {
+  id                String              @id() @default(uuid())
+  key               String              @unique
+  name              String?
+  contentType       String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  User              User[]
 }
 
 model Sermon {
