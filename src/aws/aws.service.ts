@@ -17,7 +17,7 @@ export class AwsService {
 
     constructor(private readonly configService: ConfigService) {
         this.sesClient = new SESClient({
-            region: "us-east-2",
+            region: this.configService.get("CONFIGS.AWS.AWS_REGION") as string,
             credentials: {
                 accessKeyId: this.configService.get("CONFIGS.AWS.ACCESS_KEY_ID") as string,
                 secretAccessKey: this.configService.get("CONFIGS.AWS.SECRET_ACCESS_KEY") as string,
@@ -25,7 +25,7 @@ export class AwsService {
         });
 
         this.s3Client = new S3Client({
-            region: "us-east-2",
+            region: this.configService.get("CONFIGS.AWS.AWS_REGION") as string,
             credentials: {
                 accessKeyId: this.configService.get("CONFIGS.AWS.ACCESS_KEY_ID") as string,
                 secretAccessKey: this.configService.get("CONFIGS.AWS.SECRET_ACCESS_KEY") as string,
@@ -105,7 +105,7 @@ export class AwsService {
     }
 
     async getCloudFrontURLFromS3({ Key, isSigned, dateLessThan = moment().add(1, "days") }: { Key: string; isSigned: boolean; dateLessThan?: moment.Moment }) {
-        const cloudFrontUrl = `${this.configService.get("CONFIGS.AWS.AWS_CLOUDFRONT_DISTRIBUTION_DOMAIN_NAME")}/${Key}`;
+        const cloudFrontUrl = `https://${this.configService.get("CONFIGS.AWS.AWS_CLOUDFRONT_DISTRIBUTION_DOMAIN_NAME")}/${Key}`;
         if (!isSigned) return cloudFrontUrl;
 
         const params = {
