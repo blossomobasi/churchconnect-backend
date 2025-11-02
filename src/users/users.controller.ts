@@ -13,6 +13,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { UpdateProfileImageDto } from "./dto/update-profile-image.dto";
 import { GetAllUserFilterDto } from "./dto/get-all-user-filter.dto";
 import { UpdateUserProfileDto } from "./dto/update-user-profile.dto";
+import { sanitizeUser } from "src/common/utils/sanitize-user";
 
 @ApiTags("Users")
 @Controller({ path: "users", version: "1" })
@@ -26,7 +27,7 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     async getUserSession(@Request() req: Request & { user: User }): Promise<HttpResponse<User>> {
         const result = await this.usersService.getUserSession(req.user);
-        return new HttpResponse("User session", result, HttpStatus.OK);
+        return new HttpResponse("User session", sanitizeUser(result) as User, HttpStatus.OK);
     }
 
     @ApiOperation({ summary: "Get All Users" })
@@ -36,7 +37,7 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     async getAllUsers(@Request() req: Request & { user: User }, @Query() paginationDto: PaginationDto, @Query() getAllUserFilterDto: GetAllUserFilterDto): Promise<HttpResponse<{ results: User[]; meta: IPaginationMeta }>> {
         const result = await this.usersService.getAllUsers(paginationDto, getAllUserFilterDto);
-        return new HttpResponse("User session", result, HttpStatus.OK);
+        return new HttpResponse("User session", { results: sanitizeUser(result.results) as User[], meta: result.meta }, HttpStatus.OK);
     }
 
     @ApiOperation({ summary: "Update user Profile" })
@@ -47,7 +48,7 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     async updateUserProfile(@Request() req: Request & { user: User }, @Body() updateUserProfileDto: UpdateUserProfileDto): Promise<HttpResponse<User>> {
         const result = await this.usersService.updateUserProfile(req.user, updateUserProfileDto);
-        return new HttpResponse("Update user Profile", result, HttpStatus.OK);
+        return new HttpResponse("Update user Profile", sanitizeUser(result) as User, HttpStatus.OK);
     }
 
     @ApiOperation({ summary: "Update User Password" })
