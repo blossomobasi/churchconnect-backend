@@ -8,7 +8,7 @@ export class GetAllUserFilterDto {
     @IsNotEmpty()
     name?: string;
 
-    @ApiPropertyOptional({ type: String, example: "wisdomdakoh@gmail.com" })
+    @ApiPropertyOptional({ type: String, example: "blosomobasi5@gmail.com" })
     @IsOptional()
     @IsString()
     @IsNotEmpty()
