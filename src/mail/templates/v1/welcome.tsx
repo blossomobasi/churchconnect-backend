@@ -7,9 +7,9 @@ export interface WelcomeMailProps {
 }
 
 export const WelcomeMail = ({ name }: WelcomeMailProps) => (
-    <BaseTemplate previewText="Welcome to PitchPan!">
-        <Text style={{ fontSize: "20px", fontWeight: "bold" }}>Welcome to PitchPan, {name}!</Text>
-        <Text>We're excited to have you on board. PitchPan is here to make your freelance journey safer, smarter, and more rewarding.</Text>
+    <BaseTemplate previewText="Welcome to APP_NAME!">
+        <Text style={{ fontSize: "20px", fontWeight: "bold" }}>Welcome to APP_NAME, {name}!</Text>
+        <Text>We're excited to have you on board. APP_NAME is here to make your freelance journey safer, smarter, and more rewarding.</Text>
         <Text>Get started by browsing projects or setting up your first contract.</Text>
         <Button href="#" style={{ backgroundColor: "#2B4BF2", padding: "12px 24px", borderRadius: "6px", color: "white", fontWeight: "bold", textDecoration: "none" }}>
             Go to Dashboard

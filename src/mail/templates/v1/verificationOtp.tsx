@@ -7,9 +7,9 @@ export interface VerificationOtpProps {
 }
 
 export const VerificationOtp = ({ otp }: VerificationOtpProps) => (
-    <BaseTemplate previewText="Verify your email with PitchPan">
+    <BaseTemplate previewText="Verify your email with APP_NAME">
         <Text style={{ fontSize: "20px", fontWeight: "bold" }}>Verify Your Email</Text>
-        <Text>Use the following code to verify your email on PitchPan:</Text>
+        <Text>Use the following code to verify your email on APP_NAME:</Text>
         <Text style={{ fontSize: "24px", fontWeight: "bold", letterSpacing: "2px" }}>{otp}</Text>
     </BaseTemplate>
 );
