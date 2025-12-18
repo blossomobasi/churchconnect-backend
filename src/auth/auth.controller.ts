@@ -1,7 +1,6 @@
 import { User } from "@prisma/client";
 import { LoginDto } from "./dto/login.dto";
 import { AuthService } from "./auth.service";
-import { ConfigService } from "@nestjs/config";
 import { RegisterDto } from "./dto/register.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
@@ -19,10 +18,7 @@ import { VerifyResetOTPDto } from "./dto/verify-reset-otp.dto";
 @ApiTags("Authentication")
 @Controller({ path: "auth", version: "1" })
 export class AuthController {
-    constructor(
-        private readonly authService: AuthService,
-        private readonly configService: ConfigService
-    ) {}
+    constructor(private readonly authService: AuthService) {}
 
     @ApiOperation({ summary: "Register" })
     @ApiHttpErrorResponses()
