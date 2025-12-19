@@ -41,7 +41,22 @@ export class SermonService {
 
         const paginator = new PageNumberPaginator<Sermon>(this.prismaService.sermon, { page: paginationDto.page, limit: paginationDto.limit }, { where: query, orderBy: { datePreached: "desc" } });
 
-        const { data: results, meta } = await paginator.paginate();
+        const { data: sermons, meta } = await paginator.paginate();
+
+        const results = await Promise.all(
+            sermons.map(async (sermon) => {
+                const sermonAudioFile = sermon.audioFileId ? await this.fileService.getFileUrl({ fileId: sermon.audioFileId, isSigned: true, useCloudFront: true }) : null;
+                const sermonVideoFile = sermon.videoFileId ? await this.fileService.getFileUrl({ fileId: sermon.videoFileId, isSigned: true, useCloudFront: true }) : null;
+                const sermonThumbnailFile = sermon.thumbnailFileId ? await this.fileService.getFileUrl({ fileId: sermon.thumbnailFileId, isSigned: true, useCloudFront: true }) : null;
+
+                return {
+                    ...sermon,
+                    audioFile: sermonAudioFile,
+                    videoFile: sermonVideoFile,
+                    thumbnailFile: sermonThumbnailFile,
+                };
+            })
+        );
 
         return { results, meta };
     }
