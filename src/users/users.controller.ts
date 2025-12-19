@@ -38,7 +38,7 @@ export class UsersController {
     @ApiHttpErrorResponses()
     @Get("")
     @UseGuards(JwtAuthGuard, RolesGuard)
-    // @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
+    @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
     async getAllUsers(@Request() req: Request & { user: User }, @Query() paginationDto: PaginationDto, @Query() getAllUserFilterDto: GetAllUserFilterDto): Promise<HttpResponse<{ results: User[]; meta: IPaginationMeta }>> {
         const result = await this.usersService.getAllUsers(paginationDto, getAllUserFilterDto);
         return new HttpResponse("User session", { results: sanitizeUser(result.results) as User[], meta: result.meta }, HttpStatus.OK);
