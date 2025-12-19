@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { SermonService } from "./sermon.service";
 import { ApiHttpErrorResponses, ApiHttpResponse } from "src/common/decorators/custom-decorator";
@@ -13,6 +13,9 @@ import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { MAX_FILE_SIZE_FOR_SERMON_AUDIO, MAX_FILE_SIZE_FOR_SERMON_THUMBNAIL, MAX_FILE_SIZE_FOR_SERMON_VIDEO, SUPPORTED_FILE_TYPES_FOR_SERMON_AUDIO, SUPPORTED_FILE_TYPES_FOR_SERMON_THUMBNAIL, SUPPORTED_FILE_TYPES_FOR_SERMON_VIDEO } from "./sermon.constants";
 import { User } from "@sentry/nestjs";
 import { validateFile } from "src/common/validators/file.validator";
+import { PaginationDto } from "src/common/dto/pagination.dto";
+import { GetAllSermonFilterDto } from "./dto/get-all-sermon-filter-dto";
+import { IPaginationMeta } from "src/common/utils/pagination";
 
 @ApiTags("Sermons")
 @Controller({ path: "sermons", version: "1" })
@@ -26,12 +29,12 @@ export class SermonController {
     @ApiHttpResponse({ status: HttpStatus.CREATED, type: CreateSermonDto, description: "Sermon created successfully" })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
-    // @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
+    @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
     @UseInterceptors(
         FileFieldsInterceptor([
-            { name: "audio", maxCount: 1 },
-            { name: "video", maxCount: 1 },
-            { name: "thumbnail", maxCount: 1 },
+            { name: "audioFile", maxCount: 1 },
+            { name: "videoFile", maxCount: 1 },
+            { name: "thumbnailFile", maxCount: 1 },
         ])
     )
     @Post()
@@ -39,11 +42,11 @@ export class SermonController {
         @Req() req: Request & { user: User },
         @Body() createSermonDto: CreateSermonDto,
         @UploadedFiles()
-        files: { audio?: Express.Multer.File[]; video?: Express.Multer.File[]; thumbnail?: Express.Multer.File[] }
+        files: { audioFile?: Express.Multer.File[]; videoFile?: Express.Multer.File[]; thumbnailFile?: Express.Multer.File[] }
     ): Promise<HttpResponse<Sermon>> {
         // Validate audio file
-        if (files.audio?.at(0)) {
-            validateFile(files.audio.at(0) as Express.Multer.File, {
+        if (files.audioFile?.at(0)) {
+            validateFile(files.audioFile.at(0) as Express.Multer.File, {
                 allowedTypes: SUPPORTED_FILE_TYPES_FOR_SERMON_AUDIO,
                 maxSize: MAX_FILE_SIZE_FOR_SERMON_AUDIO,
                 label: "Audio",
@@ -51,8 +54,8 @@ export class SermonController {
         }
 
         // Validate video file
-        if (files.video?.at(0)) {
-            validateFile(files.video.at(0) as Express.Multer.File, {
+        if (files.videoFile?.at(0)) {
+            validateFile(files.videoFile.at(0) as Express.Multer.File, {
                 allowedTypes: SUPPORTED_FILE_TYPES_FOR_SERMON_VIDEO,
                 maxSize: MAX_FILE_SIZE_FOR_SERMON_VIDEO,
                 label: "Video",
@@ -60,8 +63,8 @@ export class SermonController {
         }
 
         // Validate thumbnail file
-        if (files.thumbnail?.at(0)) {
-            validateFile(files.thumbnail.at(0) as Express.Multer.File, {
+        if (files.thumbnailFile?.at(0)) {
+            validateFile(files.thumbnailFile.at(0) as Express.Multer.File, {
                 allowedTypes: SUPPORTED_FILE_TYPES_FOR_SERMON_THUMBNAIL,
                 maxSize: MAX_FILE_SIZE_FOR_SERMON_THUMBNAIL,
                 label: "Thumbnail",
@@ -70,7 +73,19 @@ export class SermonController {
 
         const userId = req.user.id;
 
-        const sermon = await this.sermonService.createSermon(createSermonDto, files, userId as string);
+        const sermon = await this.sermonService.createSermon(createSermonDto, { audio: files.audioFile, video: files.videoFile, thumbnail: files.thumbnailFile }, userId as string);
         return new HttpResponse("Sermon created successfully", sermon, HttpStatus.CREATED);
+    }
+
+    @ApiOperation({ summary: "Get all sermons" })
+    @ApiHttpErrorResponses()
+    @HttpCode(HttpStatus.OK)
+    @ApiHttpResponse({ status: HttpStatus.OK, type: CreateSermonDto, description: "Sermons fetched successfully" })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @Get()
+    async getSermons(@Query() PaginationDto: PaginationDto, @Query() getAllSermonFilterDto: GetAllSermonFilterDto): Promise<HttpResponse<{ results: Sermon[]; meta: IPaginationMeta }>> {
+        const sermons = await this.sermonService.getAllSermons(PaginationDto, getAllSermonFilterDto);
+        return new HttpResponse("Sermons fetched successfully", sermons, HttpStatus.OK);
     }
 }
