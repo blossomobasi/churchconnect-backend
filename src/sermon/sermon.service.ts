@@ -6,6 +6,7 @@ import { PaginationDto } from "src/common/dto/pagination.dto";
 import { GetAllSermonFilterDto } from "./dto/get-all-sermon-filter-dto";
 import { IPaginationMeta, PageNumberPaginator } from "src/common/utils/pagination";
 import { FileService } from "src/file/file.service";
+import { UpdateSermonDto } from "./dto/update-sermon-dto";
 
 @Injectable()
 export class SermonService {
@@ -105,5 +106,85 @@ export class SermonService {
                 },
             },
         });
+    }
+
+    async updateSermon(sermonId: string, updateSermonDto: UpdateSermonDto, files: { audio?: Express.Multer.File[]; video?: Express.Multer.File[]; thumbnail?: Express.Multer.File[] }): Promise<Sermon> {
+        const existingSermon = await this.getSermonById(sermonId);
+
+        // handle file uploads and deletions
+        let audioFileId = existingSermon.audioFileId;
+        let videoFileId = existingSermon.videoFileId;
+        let thumbnailFileId = existingSermon.thumbnailFileId;
+
+        if (files.audio?.at(0)) {
+            if (audioFileId) {
+                await this.fileService.deleteFile({ fileId: audioFileId });
+            }
+
+            const audioFile = await this.fileService.uploadFile({ file: files.audio.at(0) as Express.Multer.File, folder: "sermons/audios" });
+            audioFileId = audioFile.id;
+        }
+
+        if (files.video?.at(0)) {
+            if (videoFileId) {
+                await this.fileService.deleteFile({ fileId: videoFileId });
+            }
+
+            const audioFile = await this.fileService.uploadFile({ file: files.video.at(0) as Express.Multer.File, folder: "sermons/videos" });
+            videoFileId = audioFile.id;
+        }
+
+        if (files.thumbnail?.at(0)) {
+            if (thumbnailFileId) {
+                await this.fileService.deleteFile({ fileId: thumbnailFileId });
+            }
+
+            const thumbnailFile = await this.fileService.uploadFile({ file: files.thumbnail.at(0) as Express.Multer.File, folder: "sermons/thumbnails" });
+            thumbnailFileId = thumbnailFile.id;
+        }
+
+        return this.prismaService.sermon.update({
+            where: { id: sermonId },
+            data: {
+                ...(updateSermonDto.title && { title: updateSermonDto.title }),
+                ...(updateSermonDto.description !== undefined && { description: updateSermonDto.description }),
+                ...(updateSermonDto.preacher && { preacher: updateSermonDto.preacher }),
+                ...(updateSermonDto.datePreached && { datePreached: new Date(updateSermonDto.datePreached) }),
+                ...(updateSermonDto.scriptureText !== undefined && { scriptureText: updateSermonDto.scriptureText }),
+                audioFileId,
+                videoFileId,
+                thumbnailFileId,
+            },
+            include: {
+                audioFile: true,
+                videoFile: true,
+                thumbnailFile: true,
+                uploadedBy: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+    }
+
+    async deleteSermon(sermonId: string): Promise<void> {
+        const existingSermon = await this.getSermonById(sermonId);
+
+        // Delete the sermon record
+        if (existingSermon.audioFileId) {
+            await this.fileService.deleteFile({ fileId: existingSermon.audioFileId });
+        }
+        if (existingSermon.videoFileId) {
+            await this.fileService.deleteFile({ fileId: existingSermon.videoFileId });
+        }
+        if (existingSermon.thumbnailFileId) {
+            await this.fileService.deleteFile({ fileId: existingSermon.thumbnailFileId });
+        }
+
+        await this.prismaService.sermon.delete({ where: { id: sermonId } });
     }
 }
