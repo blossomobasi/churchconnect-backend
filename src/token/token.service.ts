@@ -14,10 +14,11 @@ export class TokenService {
         private readonly tokenBackend: TokenBackend
     ) {}
 
-    async generateAuthTokens(user: Pick<User, "id">) {
+    async generateAuthTokens(user: Pick<User, "id" | "role">) {
         // Generate the refresh token
         const refreshToken = new RefreshToken({
             sub: user.id,
+            role: user.role,
             exp: new Date(Date.now() + this.configService.get("CONFIGS.REFRESH_TOKEN_JWT_EXPIRES_IN")),
         });
 
@@ -59,7 +60,7 @@ export class TokenService {
             });
         }
 
-        return this.generateAuthTokens(user);
+        return this.generateAuthTokens({ id: user.id, role: user.role });
     }
 
     async revokeRefreshToken(user: User, refreshToken: string) {
