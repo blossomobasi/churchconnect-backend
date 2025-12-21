@@ -16,6 +16,7 @@ import { FileModule } from "./file/file.module";
 import { LoggerMiddleware } from "./common/middlewares/logger.middleware";
 import { BullModule } from "@nestjs/bull";
 import { SermonModule } from "./sermon/sermon.module";
+import { DepartmentModule } from "./department/department.module";
 
 @Module({
     imports: [
@@ -55,6 +56,7 @@ import { SermonModule } from "./sermon/sermon.module";
         FileModule,
         PrismaModule,
         SermonModule,
+        DepartmentModule,
     ],
     controllers: [AppController],
     providers: [AppService],
