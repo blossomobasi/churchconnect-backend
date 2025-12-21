@@ -12,7 +12,7 @@ export class GetAllSermonFilterDto {
     @IsOptional()
     title?: string;
 
-    @ApiPropertyOptional({ type: Date, description: "Filter by date preached (YYYY-MM-DD)" })
+    @ApiPropertyOptional({ type: String, format: "date-time", description: "Filter by date preached (YYYY-MM-DD)" })
     @IsOptional()
-    datePreached?: Date;
+    datePreached?: string;
 }
