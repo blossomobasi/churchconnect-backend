@@ -14,21 +14,21 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  PASTOR
-  MEMBER
+  ADMIN           
+  MEMBER          
+  DEPARTMENT_HEAD 
 }
 
 enum DonationType {
-  TITHE
-  OFFERING
-  SEED
-  OTHER
+  TITHE           
+  OFFERING        
+  SEED            
+  OTHER           
 }
 
 enum Provider {
-  DEFAULT
-  GOOGLE
+  DEFAULT        
+  GOOGLE         
 }
 
 model User {
@@ -79,7 +79,12 @@ model File {
   contentType       String?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
+
+  // Relations
   User              User[]
+  sermonAudios     Sermon[] @relation("SermonAudio")
+  sermonVideos     Sermon[] @relation("SermonVideo")
+  sermonThumbnails Sermon[] @relation("SermonThumbnail")
 }
 
 model Sermon {
@@ -88,16 +93,23 @@ model Sermon {
   description     String?
   preacher        String
   datePreached    DateTime
-  category        String?
   scriptureText   String?
-  audioUrl        String?
-  videoUrl        String?
-  thumbnailUrl    String?
+
+  // File relations instead of direct URLs
+  audioFileId     String?
+  audioFile       File?    @relation("SermonAudio", fields: [audioFileId], references: [id], onDelete: SetNull)
+  
+  videoFileId     String?
+  videoFile       File?    @relation("SermonVideo", fields: [videoFileId], references: [id], onDelete: SetNull)
+  
+  thumbnailFileId String?
+  thumbnailFile   File?    @relation("SermonThumbnail", fields: [thumbnailFileId], references: [id], onDelete: SetNull)
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   uploadedById    String?
-  uploadedBy      User?     @relation(fields: [uploadedById], references: [id])
+  uploadedBy      User?     @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 }
 
 

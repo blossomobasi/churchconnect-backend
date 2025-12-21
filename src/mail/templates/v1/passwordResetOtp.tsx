@@ -6,9 +6,9 @@ export interface PasswordResetOtpProps {
 }
 
 export const PasswordResetOtp = ({ otp }: PasswordResetOtpProps) => (
-    <BaseTemplate previewText="Reset your PitchPan password">
+    <BaseTemplate previewText="Reset your APP_NAME password">
         <Text style={{ fontSize: "20px", fontWeight: "bold" }}>Reset Your Password</Text>
-        <Text>Use the code below to reset your PitchPan password:</Text>
+        <Text>Use the code below to reset your APP_NAME password:</Text>
         <Text style={{ fontSize: "24px", fontWeight: "bold", letterSpacing: "2px" }}>{otp}</Text>
     </BaseTemplate>
 );

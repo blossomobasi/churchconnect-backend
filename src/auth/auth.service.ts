@@ -65,7 +65,7 @@ export class AuthService {
     }
 
     async login(user: User) {
-        const token = await this.tokenService.generateAuthTokens(user);
+        const token = await this.tokenService.generateAuthTokens({ id: user.id, role: user.role });
         const {
             // password,
             // verificationOtp,
@@ -139,8 +139,6 @@ export class AuthService {
             },
         });
         if (!user) throw new NotFoundException("Invalid or expired OTP");
-
-        console.log(user);
 
         if (!user.verificationOtp) throw new HttpException("Invalid or expired OTP", HttpStatus.UNAUTHORIZED);
 

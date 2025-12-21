@@ -14,6 +14,9 @@ import { UpdateProfileImageDto } from "./dto/update-profile-image.dto";
 import { GetAllUserFilterDto } from "./dto/get-all-user-filter.dto";
 import { UpdateUserProfileDto } from "./dto/update-user-profile.dto";
 import { sanitizeUser } from "src/common/utils/sanitize-user";
+import { RolesGuard } from "src/auth/guards/roles.guard";
+import { Roles } from "src/auth/decorators/roles.decorator";
+import { Role } from "src/auth/enums/role.enums";
 
 @ApiTags("Users")
 @Controller({ path: "users", version: "1" })
@@ -34,7 +37,8 @@ export class UsersController {
     @ApiBearerAuth()
     @ApiHttpErrorResponses()
     @Get("")
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
     async getAllUsers(@Request() req: Request & { user: User }, @Query() paginationDto: PaginationDto, @Query() getAllUserFilterDto: GetAllUserFilterDto): Promise<HttpResponse<{ results: User[]; meta: IPaginationMeta }>> {
         const result = await this.usersService.getAllUsers(paginationDto, getAllUserFilterDto);
         return new HttpResponse("User session", { results: sanitizeUser(result.results) as User[], meta: result.meta }, HttpStatus.OK);
