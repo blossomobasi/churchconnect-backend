@@ -14,21 +14,21 @@ datasource db {
 }
 
 enum Role {
-  ADMIN           @map("admin")
-  MEMBER          @map("member")
-  DEPARTMENT_HEAD @map("department_head")
+  ADMIN           
+  MEMBER          
+  DEPARTMENT_HEAD 
 }
 
 enum DonationType {
-  TITHE           @map("tithe")
-  OFFERING        @map("offering")
-  SEED            @map("seed")
-  OTHER           @map("other")  
+  TITHE           
+  OFFERING        
+  SEED            
+  OTHER           
 }
 
 enum Provider {
-  DEFAULT        @map("default")
-  GOOGLE         @map("google") 
+  DEFAULT        
+  GOOGLE         
 }
 
 model User {
