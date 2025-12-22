@@ -1,11 +1,11 @@
-import { User } from "@prisma/client";
+import { Department, User } from "@prisma/client";
 import { UpdatePasswordDto } from "./user.dto";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { PaginationDto } from "src/common/dto/pagination.dto";
 import { HttpResponse } from "src/common/dto/http-response.dto";
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { Request, Controller, Get, UseGuards, HttpStatus, Patch, Delete, Body, Query, Put, ParseFilePipeBuilder, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Request, Controller, Get, UseGuards, HttpStatus, Patch, Delete, Body, Query, Put, ParseFilePipeBuilder, UploadedFile, UseInterceptors, Param } from "@nestjs/common";
 import { ApiHttpErrorResponses, ApiHttpResponse } from "src/common/decorators/custom-decorator";
 import { IPaginationMeta } from "src/common/utils/pagination";
 import { SUPPORTED_USER_IMAGE_FILE_SIZE, SUPPORTED_FILE_TYPES_FOR_USER_IMAGE } from "./user.constants";
@@ -13,10 +13,10 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { UpdateProfileImageDto } from "./dto/update-profile-image.dto";
 import { GetAllUserFilterDto } from "./dto/get-all-user-filter.dto";
 import { UpdateUserProfileDto } from "./dto/update-user-profile.dto";
-import { sanitizeUser } from "src/common/utils/sanitize-user";
 import { RolesGuard } from "src/auth/guards/roles.guard";
 import { Roles } from "src/auth/decorators/roles.decorator";
 import { Role } from "src/auth/enums/role.enums";
+import { SafeUser } from "../common/utils/sanitize-user";
 
 @ApiTags("Users")
 @Controller({ path: "users", version: "1" })
@@ -28,9 +28,9 @@ export class UsersController {
     @ApiHttpErrorResponses()
     @Get("session")
     @UseGuards(JwtAuthGuard)
-    async getUserSession(@Request() req: Request & { user: User }): Promise<HttpResponse<User>> {
+    async getUserSession(@Request() req: Request & { user: User & { department: Department | null } }): Promise<HttpResponse<SafeUser & { department: Department | null }>> {
         const result = await this.usersService.getUserSession(req.user);
-        return new HttpResponse("User session", sanitizeUser(result) as User, HttpStatus.OK);
+        return new HttpResponse("User session", result, HttpStatus.OK);
     }
 
     @ApiOperation({ summary: "Get All Users" })
@@ -39,9 +39,21 @@ export class UsersController {
     @Get("")
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
-    async getAllUsers(@Request() req: Request & { user: User }, @Query() paginationDto: PaginationDto, @Query() getAllUserFilterDto: GetAllUserFilterDto): Promise<HttpResponse<{ results: User[]; meta: IPaginationMeta }>> {
+    async getAllUsers(@Request() req: Request & { user: User }, @Query() paginationDto: PaginationDto, @Query() getAllUserFilterDto: GetAllUserFilterDto): Promise<HttpResponse<{ results: SafeUser[]; meta: IPaginationMeta }>> {
         const result = await this.usersService.getAllUsers(paginationDto, getAllUserFilterDto);
-        return new HttpResponse("User session", { results: sanitizeUser(result.results) as User[], meta: result.meta }, HttpStatus.OK);
+
+        return new HttpResponse("User session", { results: result.results, meta: result.meta }, HttpStatus.OK);
+    }
+
+    @ApiOperation({ summary: "Get a user by ID" })
+    @ApiHttpErrorResponses()
+    @ApiBearerAuth()
+    @Get(":userId")
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
+    async getUserById(@Request() req: Request & { user: User }, @Param("userId") userId: string): Promise<HttpResponse<SafeUser>> {
+        const result = await this.usersService.getById(userId);
+        return new HttpResponse("User session", result, HttpStatus.OK);
     }
 
     @ApiOperation({ summary: "Update user Profile" })
@@ -50,9 +62,9 @@ export class UsersController {
     @ApiHttpResponse({ status: 200, type: Boolean, description: "Update user Profile" })
     @Put("profile")
     @UseGuards(JwtAuthGuard)
-    async updateUserProfile(@Request() req: Request & { user: User }, @Body() updateUserProfileDto: UpdateUserProfileDto): Promise<HttpResponse<User>> {
+    async updateUserProfile(@Request() req: Request & { user: User }, @Body() updateUserProfileDto: UpdateUserProfileDto): Promise<HttpResponse<SafeUser>> {
         const result = await this.usersService.updateUserProfile(req.user, updateUserProfileDto);
-        return new HttpResponse("Update user Profile", sanitizeUser(result) as User, HttpStatus.OK);
+        return new HttpResponse("Update user Profile", result, HttpStatus.OK);
     }
 
     @ApiOperation({ summary: "Update User Password" })
