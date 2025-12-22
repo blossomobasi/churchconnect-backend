@@ -11,4 +11,14 @@ export class UpdateUserProfileDto {
     @IsOptional()
     @IsString()
     lastName?: string;
+
+    @ApiPropertyOptional({ type: String })
+    @IsOptional()
+    @IsString()
+    phone?: string;
+
+    @ApiPropertyOptional({ type: String })
+    @IsOptional()
+    @IsString()
+    address?: string;
 }

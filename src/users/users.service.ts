@@ -2,7 +2,7 @@ import bcryptjs from "bcryptjs";
 import { ConfigService } from "@nestjs/config";
 import { UpdatePasswordDto } from "./user.dto";
 import { PrismaService } from "src/prisma/prisma.service";
-import { User } from "@prisma/client";
+import { Department, User } from "@prisma/client";
 import { PaginationDto } from "src/common/dto/pagination.dto";
 import { IPaginationMeta, PageNumberPaginator } from "src/common/utils/pagination";
 import { FileService } from "src/file/file.service";
@@ -11,6 +11,7 @@ import { UpdateUserProfileDto } from "./dto/update-user-profile.dto";
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { GetAllUserFilterDto } from "./dto/get-all-user-filter.dto";
+import { SafeUser, sanitizeUser } from "src/common/utils/sanitize-user";
 
 @Injectable()
 export class UsersService {
@@ -21,12 +22,16 @@ export class UsersService {
     ) {}
 
     // User Retrieval Methods
-    async getById(userId: string): Promise<User | null> {
-        const user = await this.prismaService.user.findUnique({ where: { id: userId } });
-        return user;
+    async getById(userId: string): Promise<SafeUser & { profileImageUrl: string | null; department: Department | null }> {
+        const user = await this.prismaService.user.findUnique({ where: { id: userId }, include: { department: true } });
+        const profileImageUrl = user?.profileImageId ? await this.fileService.getFileUrl({ fileId: user?.profileImageId, isSigned: true, useCloudFront: true }) : null;
+
+        const sanitizedUser = sanitizeUser(user as User);
+
+        return { ...sanitizedUser, profileImageUrl, department: user?.department as Department | null };
     }
 
-    async getAllUsers(paginationDto: PaginationDto, getAllUserFilterDto: GetAllUserFilterDto): Promise<{ results: User[]; meta: IPaginationMeta }> {
+    async getAllUsers(paginationDto: PaginationDto, getAllUserFilterDto: GetAllUserFilterDto): Promise<{ results: SafeUser[]; meta: IPaginationMeta }> {
         const query: Prisma.UserWhereInput = {};
 
         if (getAllUserFilterDto.name) {
@@ -55,16 +60,21 @@ export class UsersService {
 
         const paginator = new PageNumberPaginator<User>(this.prismaService.user, { page: paginationDto.page, limit: paginationDto.limit }, { where: query, orderBy: { createdAt: "desc" } });
         const { data: results, meta } = await paginator.paginate();
-        return { results, meta };
+
+        const sanitizedResults = sanitizeUser(results);
+
+        return { results: sanitizedResults, meta };
     }
 
-    async getUserSession(user: User): Promise<User & { profileImageUrl: string | null }> {
+    async getUserSession(user: User & { department: Department | null }): Promise<SafeUser & { profileImageUrl: string | null; department: Department | null }> {
         const profileImageUrl = user.profileImageId ? await this.fileService.getFileUrl({ fileId: user.profileImageId, isSigned: true, useCloudFront: true }) : null;
 
-        return { ...user, profileImageUrl };
+        const sanitizedUser = sanitizeUser(user);
+
+        return { ...sanitizedUser, profileImageUrl, department: user.department };
     }
 
-    async updateUserProfile(user: User, updateUserProfileDto: UpdateUserProfileDto): Promise<User> {
+    async updateUserProfile(user: User, updateUserProfileDto: UpdateUserProfileDto): Promise<SafeUser> {
         const query: Prisma.UserUpdateInput = {};
 
         if (updateUserProfileDto.firstName) {
@@ -74,9 +84,20 @@ export class UsersService {
         if (updateUserProfileDto.lastName) {
             query.lastName = updateUserProfileDto.lastName;
         }
+
+        if (updateUserProfileDto.phone) {
+            query.phone = updateUserProfileDto.phone;
+        }
+
+        if (updateUserProfileDto.address) {
+            query.address = updateUserProfileDto.address;
+        }
+
         const updatedUser = await this.prismaService.user.update({ where: { id: user.id }, data: query });
 
-        return updatedUser;
+        const sanitizedUser = sanitizeUser(updatedUser);
+
+        return sanitizedUser;
     }
 
     async updatePassword(user: User, updatePasswordDto: UpdatePasswordDto): Promise<boolean> {
