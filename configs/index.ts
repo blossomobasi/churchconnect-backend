@@ -114,6 +114,7 @@ const CONFIG_BUILDER = {
         PAYSTACK: {
             BASE_URL: process.env.PAYSTACK_BASE_URL,
             SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
+            CALLBACK_URL: process.env.PAYSTACK_CALLBACK_URL,
         },
 
         SUPPORT: {
@@ -167,6 +168,7 @@ const CONFIG_BUILDER = {
         PAYSTACK: {
             BASE_URL: process.env.PAYSTACK_BASE_URL || "https://api.paystack.co",
             SECRET_KEY: process.env.PAYSTACK_SECRET_KEY!,
+            CALLBACK_URL: process.env.PAYSTACK_CALLBACK_URL!,
         },
 
         SUPPORT: {
