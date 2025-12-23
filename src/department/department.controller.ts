@@ -14,7 +14,7 @@ import { IPaginationMeta } from "src/common/utils/pagination";
 import { UpdateDepartmentDto } from "./dto/update-department.dto";
 
 @ApiTags("Department")
-@Controller("department")
+@Controller({ path: "department", version: "1" })
 export class DepartmentController {
     constructor(private readonly departmentService: DepartmentService) {}
 
