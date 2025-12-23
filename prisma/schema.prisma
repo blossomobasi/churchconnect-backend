@@ -26,6 +26,12 @@ enum DonationType {
   OTHER           
 }
 
+enum DonationStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 enum Provider {
   DEFAULT        
   GOOGLE         
@@ -146,9 +152,13 @@ model Donation {
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   amount      Float
+  reference   String   @unique // Paystack transaction reference
+  status      DonationStatus  @default(PENDING)
   type        DonationType
-  description String?
-  date        DateTime @default(now())
+  note        String?
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Announcement {

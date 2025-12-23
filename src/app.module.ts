@@ -17,6 +17,7 @@ import { LoggerMiddleware } from "./common/middlewares/logger.middleware";
 import { BullModule } from "@nestjs/bull";
 import { SermonModule } from "./sermon/sermon.module";
 import { DepartmentModule } from "./department/department.module";
+import { DonationsModule } from "./donations/donations.module";
 
 @Module({
     imports: [
@@ -57,6 +58,7 @@ import { DepartmentModule } from "./department/department.module";
         PrismaModule,
         SermonModule,
         DepartmentModule,
+        DonationsModule,
     ],
     controllers: [AppController],
     providers: [AppService],
