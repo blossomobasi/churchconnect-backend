@@ -14,16 +14,16 @@ datasource db {
 }
 
 enum Role {
-  ADMIN           
-  MEMBER          
-  DEPARTMENT_HEAD 
+  ADMIN
+  MEMBER
+  DEPARTMENT_HEAD
 }
 
 enum DonationType {
-  TITHE           
-  OFFERING        
-  SEED            
-  OTHER           
+  TITHE
+  OFFERING
+  SEED
+  OTHER
 }
 
 enum DonationStatus {
@@ -33,38 +33,45 @@ enum DonationStatus {
 }
 
 enum Provider {
-  DEFAULT        
-  GOOGLE         
+  DEFAULT
+  GOOGLE
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  CANCELLED
+  WAITLIST
 }
 
 model User {
-  id            String         @id @default(uuid())
-  firstName     String
-  lastName      String
-  email         String          @unique
-  password      String
-  phone         String?         @unique
-  address       String?
-  role          Role            @default(MEMBER)
-  profileImageId String?
-  profileImage  File?           @relation(fields: [profileImageId], references: [id], onDelete: SetNull)
-  provider      Provider        @default(DEFAULT)
-  emailVerified Boolean         @default(false)
+  id                        String      @id @default(uuid())
+  firstName                 String
+  lastName                  String
+  email                     String      @unique
+  password                  String
+  phone                     String?     @unique
+  address                   String?
+  role                      Role        @default(MEMBER)
+  profileImageId            String?
+  profileImage              File?       @relation(fields: [profileImageId], references: [id], onDelete: SetNull)
+  provider                  Provider    @default(DEFAULT)
+  emailVerified             Boolean     @default(false)
   verificationOtp           String?
   verificationOtpExpiresAt  DateTime?
   passwordResetOtp          String?
   passwordResetOtpExpiresAt DateTime?
-  departmentId  String? 
-  department    Department?     @relation(fields: [departmentId], references: [id])
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  departmentId              String?
+  department                Department? @relation(fields: [departmentId], references: [id])
+  createdAt                 DateTime    @default(now())
+  updatedAt                 DateTime    @updatedAt
 
-  refreshToken RefreshToken[]
-  sermons       Sermon[]
-  donations     Donation[]
-  attendances   Attendance[]
-  prayerRequests PrayerRequest[]
-  testimonies   Testimony[]
+  refreshToken      RefreshToken[]
+  sermons           Sermon[]
+  donations         Donation[]
+  eventRegistration EventRegistration[]
+  createdEvents     Event[]             @relation("EventCreator")
+  prayerRequests    PrayerRequest[]
+  testimonies       Testimony[]
 }
 
 model RefreshToken {
@@ -79,45 +86,45 @@ model RefreshToken {
 }
 
 model File {
-  id                String              @id() @default(uuid())
-  key               String              @unique
-  name              String?
-  contentType       String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id          String   @id() @default(uuid())
+  key         String   @unique
+  name        String?
+  contentType String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  User              User[]
+  User             User[]
   sermonAudios     Sermon[] @relation("SermonAudio")
   sermonVideos     Sermon[] @relation("SermonVideo")
   sermonThumbnails Sermon[] @relation("SermonThumbnail")
+  events           Event[]
 }
 
 model Sermon {
-  id              String   @id @default(cuid())
-  title           String
-  description     String?
-  preacher        String
-  datePreached    DateTime
-  scriptureText   String?
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  preacher      String
+  datePreached  DateTime
+  scriptureText String?
 
   // File relations instead of direct URLs
-  audioFileId     String?
-  audioFile       File?    @relation("SermonAudio", fields: [audioFileId], references: [id], onDelete: SetNull)
-  
-  videoFileId     String?
-  videoFile       File?    @relation("SermonVideo", fields: [videoFileId], references: [id], onDelete: SetNull)
-  
+  audioFileId String?
+  audioFile   File?   @relation("SermonAudio", fields: [audioFileId], references: [id], onDelete: SetNull)
+
+  videoFileId String?
+  videoFile   File?   @relation("SermonVideo", fields: [videoFileId], references: [id], onDelete: SetNull)
+
   thumbnailFileId String?
-  thumbnailFile   File?    @relation("SermonThumbnail", fields: [thumbnailFileId], references: [id], onDelete: SetNull)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  thumbnailFile   File?   @relation("SermonThumbnail", fields: [thumbnailFileId], references: [id], onDelete: SetNull)
 
-  uploadedById    String?
-  uploadedBy      User?     @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 }
-
 
 model Department {
   id        String   @id @default(cuid())
@@ -127,64 +134,76 @@ model Department {
 }
 
 model Event {
-  id          String        @id @default(cuid())
-  title       String
-  description String?
-  date        DateTime
-  location    String?
-  attendances Attendance[]
-  createdAt   DateTime      @default(now())
+  id                 String              @id @default(cuid())
+  title              String
+  description        String?
+  tags               String[]
+  startDateTime      DateTime
+  endDateTime        DateTime
+  location           String?
+  isVirtual          Boolean             @default(false)
+  virtualMeetingLink String?
+  capacity           Int?
+  imageFileId        String?
+  imageFile          File?               @relation(fields: [imageFileId], references: [id], onDelete: SetNull)
+  createdById        String
+  createdBy          User                @relation("EventCreator", fields: [createdById], references: [id])
+  registrations      EventRegistration[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
-model Attendance {
-  id        String   @id @default(cuid())
-  userId    String
-  eventId   String
-  user      User     @relation(fields: [userId], references: [id])
-  event     Event    @relation(fields: [eventId], references: [id])
-  createdAt DateTime @default(now())
 
-  @@unique([userId, eventId]) // prevent double attendance records
+model EventRegistration {
+  id           String             @id @default(cuid())
+  eventId      String
+  event        Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User               @relation(fields: [userId], references: [id])
+  status       RegistrationStatus @default(CONFIRMED)
+  registeredAt DateTime           @default(now())
+
+  @@unique([eventId, userId]) // User can only register once per event
 }
 
 model Donation {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  amount      Float
-  reference   String   @unique // Paystack transaction reference
-  status      DonationStatus  @default(PENDING)
-  type        DonationType
-  note        String?
-  paidAt      DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  amount    Float
+  reference String         @unique // Paystack transaction reference
+  status    DonationStatus @default(PENDING)
+  type      DonationType
+  note      String?
+  paidAt    DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
 
 model Announcement {
-  id          String   @id @default(cuid())
-  title       String
-  message     String
-  createdBy   String
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  createdBy String
+  createdAt DateTime @default(now())
 }
 
 model PrayerRequest {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  content   String
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  title      String
+  content    String
   isAnswered Boolean  @default(false)
-  createdAt DateTime  @default(now())
+  createdAt  DateTime @default(now())
 }
 
 model Testimony {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  content   String
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  title      String
+  content    String
   isApproved Boolean  @default(false)
-  createdAt DateTime  @default(now())
+  createdAt  DateTime @default(now())
 }
