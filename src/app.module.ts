@@ -18,6 +18,7 @@ import { BullModule } from "@nestjs/bull";
 import { SermonModule } from "./sermon/sermon.module";
 import { DepartmentModule } from "./department/department.module";
 import { DonationsModule } from "./donations/donations.module";
+import { PrayerRequestModule } from "./prayer-request/prayer-request.module";
 
 @Module({
     imports: [
@@ -59,6 +60,7 @@ import { DonationsModule } from "./donations/donations.module";
         SermonModule,
         DepartmentModule,
         DonationsModule,
+        PrayerRequestModule,
     ],
     controllers: [AppController],
     providers: [AppService],
