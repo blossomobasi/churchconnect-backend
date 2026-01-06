@@ -24,7 +24,7 @@ export class DepartmentController {
     @ApiHttpResponse({ status: HttpStatus.CREATED, type: "Department", description: "Department created successfully" })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
+    @Roles(Role.ADMIN)
     @Post()
     async createDepartment(@Body() createDepartmentDto: CreateDepartmentDto): Promise<HttpResponse<Department>> {
         const department = await this.departmentService.createDepartment(createDepartmentDto);
