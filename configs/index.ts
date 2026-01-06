@@ -77,8 +77,8 @@ const CONFIG_BUILDER = {
         // System Constants
         // ============================================================
         URLS: {
-            API_BASE_URL: "https://localhost:4000",
-            FRONTEND_BASE_URL: "https://localhost:3000",
+            API_BASE_URL: "http://localhost:4000",
+            FRONTEND_BASE_URL: "http://localhost:3000",
         },
 
         // Security / Auth Configs
@@ -104,7 +104,8 @@ const CONFIG_BUILDER = {
 
         // App Level Configs
         // ============================================================
-        CORS_ALLOWED_ORIGINS: ["*"],
+        // CORS_ALLOWED_ORIGINS: ["*"],
+        CORS_ALLOWED_ORIGINS: ["http://localhost:3000", "http://localhost:3001"],
 
         SWAGGER: {
             PATH: "/docs",
@@ -159,7 +160,7 @@ const CONFIG_BUILDER = {
         // App Level Configs
         // ============================================================
 
-        CORS_ALLOWED_ORIGINS: Array.from(new Set(["https://admin.socket.io", "https://example.com", "http://localhost:3000"].concat(process.env.CORS_ALLOWED_ORIGINS ? process.env.CORS_ALLOWED_ORIGINS.split(",") : []))),
+        CORS_ALLOWED_ORIGINS: Array.from(new Set(["https://admin.socket.io", "https://example.com", "http://localhost:3000", "http://localhost:3001"].concat(process.env.CORS_ALLOWED_ORIGINS ? process.env.CORS_ALLOWED_ORIGINS.split(",") : []))),
 
         SWAGGER: {
             PATH: "/docs",
