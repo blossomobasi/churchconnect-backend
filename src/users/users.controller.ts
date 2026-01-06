@@ -60,7 +60,7 @@ export class UsersController {
     @ApiBearerAuth()
     @ApiHttpErrorResponses()
     @ApiHttpResponse({ status: 200, type: Boolean, description: "Update user Profile" })
-    @Put("profile")
+    @Patch("profile")
     @UseGuards(JwtAuthGuard)
     async updateUserProfile(@Request() req: Request & { user: User }, @Body() updateUserProfileDto: UpdateUserProfileDto): Promise<HttpResponse<SafeUser>> {
         const result = await this.usersService.updateUserProfile(req.user, updateUserProfileDto);
@@ -74,7 +74,7 @@ export class UsersController {
     @Patch("update-password")
     @UseGuards(JwtAuthGuard)
     async updatePassword(@Body() updatePasswordDto: UpdatePasswordDto, @Request() req: Request & { user: User }): Promise<HttpResponse<boolean>> {
-        const result = await this.usersService.updatePassword(req.user, updatePasswordDto);
+        const result = await this.usersService.updatePassword(req.user.id, updatePasswordDto);
         return new HttpResponse("Password updated successfully", result, HttpStatus.OK);
     }
 

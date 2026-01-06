@@ -20,6 +20,7 @@ import { DepartmentModule } from "./department/department.module";
 import { DonationsModule } from "./donations/donations.module";
 import { PrayerRequestModule } from "./prayer-request/prayer-request.module";
 import { EventModule } from "./events/event.module";
+import { TestimonyModule } from "./testimony/testimony.module";
 
 @Module({
     imports: [
@@ -63,6 +64,7 @@ import { EventModule } from "./events/event.module";
         DonationsModule,
         PrayerRequestModule,
         EventModule,
+        TestimonyModule,
     ],
     controllers: [AppController],
     providers: [AppService],

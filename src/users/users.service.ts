@@ -8,7 +8,7 @@ import { IPaginationMeta, PageNumberPaginator } from "src/common/utils/paginatio
 import { FileService } from "src/file/file.service";
 import { UpdateProfileImageDto } from "./dto/update-profile-image.dto";
 import { UpdateUserProfileDto } from "./dto/update-user-profile.dto";
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { GetAllUserFilterDto } from "./dto/get-all-user-filter.dto";
 import { SafeUser, sanitizeUser } from "src/common/utils/sanitize-user";
@@ -100,13 +100,17 @@ export class UsersService {
         return sanitizedUser;
     }
 
-    async updatePassword(user: User, updatePasswordDto: UpdatePasswordDto): Promise<boolean> {
+    async updatePassword(userId: string, updatePasswordDto: UpdatePasswordDto): Promise<boolean> {
+        const user = await this.prismaService.user.findUnique({ where: { id: userId }, select: { password: true } });
+
+        if (!user) throw new NotFoundException("User not found");
+
         const isPasswordMatching = await bcryptjs.compare(updatePasswordDto.currentPassword, user.password as string);
         if (!isPasswordMatching) throw new UnauthorizedException("Current password is incorrect");
 
         const passwordHash = await bcryptjs.hash(updatePasswordDto.newPassword, this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
 
-        await this.prismaService.user.update({ where: { id: user.id }, data: { password: passwordHash } });
+        await this.prismaService.user.update({ where: { id: userId }, data: { password: passwordHash } });
 
         return true;
     }
