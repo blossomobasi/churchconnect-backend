@@ -21,7 +21,7 @@ export class PaystackService {
                     email: data.email,
                     amount: data.amount,
                     reference: data.reference || this.generateReference(),
-                    callback_url: data.callback_url || this.configService.get("PAYSTACK_CALLBACK_URL"),
+                    callback_url: `${this.configService.get("CONFIGS.URLS.FRONTEND_BASE_URL")}/member/donations`,
                     metadata: data.metadata,
                 },
                 {
