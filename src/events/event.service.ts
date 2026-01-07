@@ -109,8 +109,27 @@ export class EventService {
             }
         );
 
-        const { data: events, meta } = await paginator.paginate();
-        return { results: events, meta };
+        const { data, meta } = await paginator.paginate();
+
+        const events = data as (Event & {
+            _count: { registrations: number };
+        })[];
+
+        const results = await Promise.all(
+            events.map(async (event) => ({
+                ...event,
+                eventImageFileUrl: event.imageFileId
+                    ? await this.fileService.getFileUrl({
+                          fileId: event.imageFileId,
+                          isSigned: true,
+                          useCloudFront: true,
+                      })
+                    : null,
+                isRegistered: event._count.registrations > 0,
+            }))
+        );
+
+        return { results, meta };
     }
 
     async getEventById(eventId: string): Promise<Event & { eventImageUrl: string | null }> {
