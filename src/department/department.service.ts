@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { Department } from "@prisma/client";
 import { PaginationDto } from "src/common/dto/pagination.dto";
 import { IPaginationMeta, PageNumberPaginator } from "src/common/utils/pagination";
@@ -21,7 +21,7 @@ export class DepartmentService {
     }
 
     async getAllDepartments(paginationDto: PaginationDto): Promise<{ results: Department[]; meta: IPaginationMeta }> {
-        const paginator = new PageNumberPaginator<Department>(this.prismaService.department, { page: paginationDto.page, limit: paginationDto.limit }, { orderBy: { createdAt: "desc" } });
+        const paginator = new PageNumberPaginator<Department>(this.prismaService.department, { page: paginationDto.page, limit: paginationDto.limit }, { orderBy: { createdAt: "desc" }, include: { members: true } });
 
         const { data: departments, meta } = await paginator.paginate();
 
@@ -52,6 +52,16 @@ export class DepartmentService {
         return this.prismaService.department.delete({ where: { id: departmentId } });
     }
 
+    async getUsersAssignedToDepartment(departmentId: string): Promise<Department> {
+        const department = await this.prismaService.department.findUnique({ where: { id: departmentId }, include: { members: true } });
+
+        if (!department) {
+            throw new NotFoundException("Department not found");
+        }
+
+        return department;
+    }
+
     async assignUserToDepartment(departmentId: string, userId: string): Promise<Department> {
         const user = await this.prismaService.user.findUnique({
             where: { id: userId },
@@ -60,10 +70,6 @@ export class DepartmentService {
 
         if (!user) {
             throw new NotFoundException("User not found");
-        }
-
-        if (user.departmentId) {
-            throw new BadRequestException("User is already assigned to a department, remove them first");
         }
 
         const department = await this.getDepartment(departmentId);
@@ -81,5 +87,25 @@ export class DepartmentService {
         });
 
         return updatedDepartment!;
+    }
+
+    async removeUserFromDepartment(departmentId: string, userId: string): Promise<Department> {
+        const user = await this.prismaService.user.findUnique({
+            where: { id: userId },
+            select: { id: true, departmentId: true },
+        });
+
+        if (!user) {
+            throw new NotFoundException("User not found");
+        }
+
+        const department = await this.getDepartment(departmentId);
+
+        // Update user's departmentId
+        await this.prismaService.user.update({
+            where: { id: userId },
+            data: { departmentId: null },
+        });
+        return department;
     }
 }

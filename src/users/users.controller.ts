@@ -5,7 +5,7 @@ import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { PaginationDto } from "src/common/dto/pagination.dto";
 import { HttpResponse } from "src/common/dto/http-response.dto";
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { Request, Controller, Get, UseGuards, HttpStatus, Patch, Delete, Body, Query, Put, ParseFilePipeBuilder, UploadedFile, UseInterceptors, Param } from "@nestjs/common";
+import { Request, Controller, Get, UseGuards, HttpStatus, Patch, Delete, Body, Query, ParseFilePipeBuilder, UploadedFile, UseInterceptors, Param } from "@nestjs/common";
 import { ApiHttpErrorResponses, ApiHttpResponse } from "src/common/decorators/custom-decorator";
 import { IPaginationMeta } from "src/common/utils/pagination";
 import { SUPPORTED_USER_IMAGE_FILE_SIZE, SUPPORTED_FILE_TYPES_FOR_USER_IMAGE } from "./user.constants";
@@ -17,6 +17,7 @@ import { RolesGuard } from "src/auth/guards/roles.guard";
 import { Roles } from "src/auth/decorators/roles.decorator";
 import { Role } from "src/auth/enums/role.enums";
 import { SafeUser } from "../common/utils/sanitize-user";
+import { UpdateUserRoleDto } from "./dto/update-user-role.dto";
 
 @ApiTags("Users")
 @Controller({ path: "users", version: "1" })
@@ -115,5 +116,17 @@ export class UsersController {
     async deleteProfileImage(@Request() req: Request & { user: User }): Promise<HttpResponse<void>> {
         const result = await this.usersService.deleteProfileImage(req.user);
         return new HttpResponse("Profile Image Delete successfully", result, HttpStatus.OK);
+    }
+
+    @ApiOperation({ summary: "Change user role" })
+    @ApiBearerAuth()
+    @ApiHttpErrorResponses()
+    @ApiHttpResponse({ status: 200, type: Boolean, description: "Change user role" })
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN)
+    @Patch(":userId/role")
+    async updateUserRole(@Param("userId") userId: string, @Body() updateUserRoleDto: UpdateUserRoleDto): Promise<HttpResponse<SafeUser>> {
+        const result = await this.usersService.updateUserRole(userId, updateUserRoleDto);
+        return new HttpResponse("User role updated successfully", result, HttpStatus.OK);
     }
 }

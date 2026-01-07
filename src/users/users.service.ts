@@ -8,10 +8,12 @@ import { IPaginationMeta, PageNumberPaginator } from "src/common/utils/paginatio
 import { FileService } from "src/file/file.service";
 import { UpdateProfileImageDto } from "./dto/update-profile-image.dto";
 import { UpdateUserProfileDto } from "./dto/update-user-profile.dto";
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { GetAllUserFilterDto } from "./dto/get-all-user-filter.dto";
 import { SafeUser, sanitizeUser } from "src/common/utils/sanitize-user";
+import { Role } from "src/auth/enums/role.enums";
+import { UpdateUserRoleDto } from "./dto/update-user-role.dto";
 
 @Injectable()
 export class UsersService {
@@ -58,7 +60,7 @@ export class UsersService {
             }
         }
 
-        const paginator = new PageNumberPaginator<User>(this.prismaService.user, { page: paginationDto.page, limit: paginationDto.limit }, { where: query, orderBy: { createdAt: "desc" } });
+        const paginator = new PageNumberPaginator<User>(this.prismaService.user, { page: paginationDto.page, limit: paginationDto.limit }, { where: query, orderBy: { createdAt: "desc" }, include: { department: true } });
         const { data: results, meta } = await paginator.paginate();
 
         const sanitizedResults = sanitizeUser(results);
@@ -147,5 +149,17 @@ export class UsersService {
                 await this.fileService.deleteFile({ fileId: user.profileImageId });
             }
         });
+    }
+
+    async updateUserRole(userId: string, updateUserRoleDto: UpdateUserRoleDto): Promise<SafeUser> {
+        const user = await this.prismaService.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException("User not found");
+
+        if (user.role === updateUserRoleDto.role) throw new BadRequestException("User role is already updated");
+        if (updateUserRoleDto.role === Role.ADMIN) throw new BadRequestException("Cannot update user role to ADMIN");
+
+        const result = await this.prismaService.user.update({ where: { id: userId }, data: { role: updateUserRoleDto.role } });
+
+        return sanitizeUser(result);
     }
 }

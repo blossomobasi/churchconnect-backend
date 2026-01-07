@@ -55,6 +55,18 @@ export class DepartmentController {
         return new HttpResponse("Department fetched successfully", department, HttpStatus.OK);
     }
 
+    @ApiOperation({ summary: "Get users assigned to a department" })
+    @ApiHttpErrorResponses()
+    @HttpCode(HttpStatus.OK)
+    @ApiHttpResponse({ status: HttpStatus.OK, type: String, description: "Users retrieved successfully" })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @Get(":departmentId/users")
+    async getUsersAssignedToDepartment(@Param("departmentId") departmentId: string): Promise<HttpResponse<Department>> {
+        const department = await this.departmentService.getUsersAssignedToDepartment(departmentId);
+        return new HttpResponse("Users fetched successfully", department, HttpStatus.OK);
+    }
+
     @ApiOperation({ summary: "Update a department by id" })
     @ApiHttpErrorResponses()
     @HttpCode(HttpStatus.OK)
@@ -88,9 +100,22 @@ export class DepartmentController {
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
-    @Patch(":departmentId/user/:userId")
+    @Patch(":departmentId/user/:userId/assign")
     async assignUserToDepartment(@Param("departmentId") departmentId: string, @Param("userId") userId: string): Promise<HttpResponse<Department>> {
         const department = await this.departmentService.assignUserToDepartment(departmentId, userId);
         return new HttpResponse("User assigned to department successfully", department, HttpStatus.OK);
+    }
+
+    @ApiOperation({ summary: "Remove user from department" })
+    @ApiHttpErrorResponses()
+    @HttpCode(HttpStatus.OK)
+    @ApiHttpResponse({ status: HttpStatus.OK, type: String, description: "User removed from department successfully" })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
+    @Patch(":departmentId/user/:userId/remove")
+    async removeUserFromDepartment(@Param("departmentId") departmentId: string, @Param("userId") userId: string): Promise<HttpResponse<Department>> {
+        const department = await this.departmentService.removeUserFromDepartment(departmentId, userId);
+        return new HttpResponse("User removed from department successfully", department, HttpStatus.OK);
     }
 }
