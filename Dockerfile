@@ -51,4 +51,4 @@ ENV NODE_ENV=production \
 
 EXPOSE 3000
 
-CMD ["node", "dist/src/main.js"]
+CMD sh -c "yarn prisma migrate deploy && node dist/src/main.js"
