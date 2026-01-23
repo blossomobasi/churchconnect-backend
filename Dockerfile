@@ -42,7 +42,6 @@ COPY --from=builder /usr/src/app/tsconfig.json ./
 COPY --from=builder /usr/src/app/tsconfig.build.json ./
 COPY --from=builder /usr/src/app/nest-cli.json ./
 COPY --from=builder /usr/src/app/src/mail/templates ./src/mail/templates
-COPY --from=builder /usr/src/app/entrypoint.sh ./
 COPY --from=builder /usr/src/app/prisma ./prisma
 
 # Install only production dependencies
