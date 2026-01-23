@@ -105,7 +105,7 @@ const CONFIG_BUILDER = {
         // App Level Configs
         // ============================================================
         // CORS_ALLOWED_ORIGINS: ["*"],
-        CORS_ALLOWED_ORIGINS: ["http://localhost:3000", "http://localhost:3001"],
+        CORS_ALLOWED_ORIGINS: ["http://localhost:3000", "http://localhost:3001", "http://localhost3002"],
 
         SWAGGER: {
             PATH: "/docs",
