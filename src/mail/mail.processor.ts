@@ -1,51 +1,44 @@
 import { Job } from "bull";
 import { Logger } from "@nestjs/common";
 import { render } from "@react-email/render";
-import { ConfigService } from "@nestjs/config";
-import { AwsService } from "src/aws/aws.service";
 import { Process, Processor } from "@nestjs/bull";
-import { EnqueueMailDto } from "./dto/enqueue-mail.dto";
-import { MailerService } from "@nestjs-modules/mailer";
 import { WelcomeMail } from "src/mail/templates/v1/welcome";
 import { PasswordResetOtp } from "src/mail/templates/v1/passwordResetOtp";
 import { VerificationOtp } from "./templates/v1/verificationOtp";
+import { ResendMailProvider } from "./resend.mail.provider";
+import { JSX } from "react";
+
+type MailTemplateKey = "WelcomeMail" | "PasswordResetOtp" | "VerificationOtp";
 
 @Processor(MailQueue.name)
 export class MailQueue {
     private readonly logger = new Logger(MailQueue.name);
 
-    constructor(
-        private readonly awsService: AwsService,
-        private readonly configService: ConfigService,
-        private readonly mailerService: MailerService
-    ) {}
+    constructor(private readonly resendProvider: ResendMailProvider) {}
 
     @Process("enqueueEmail")
-    async enqueueEmail(job: Job<EnqueueMailDto<any>>) {
-        try {
-            const mailTemplateMap = {
-                [WelcomeMail.name]: WelcomeMail,
-                [PasswordResetOtp.name]: PasswordResetOtp,
-                [VerificationOtp.name]: VerificationOtp,
-            };
+    async enqueueEmail(job: Job<any>) {
+        const { email, subject, templateFn, props } = job.data;
 
-            const templateFn = mailTemplateMap[job.data.templateFn];
+        const templates: Record<MailTemplateKey, (props: any) => JSX.Element> = {
+            WelcomeMail,
+            PasswordResetOtp,
+            VerificationOtp,
+        };
 
-            const html = await render(templateFn(job.data.props), {
-                plainText: false,
-            });
-
-            await this.mailerService.sendMail({
-                ...job.data.options,
-                html,
-            });
-
-            this.logger.debug(`Status processing completed for job: ${job.id}`);
-
-            return { success: true };
-        } catch (error) {
-            this.logger.error(`Failed to process content: ${(error as Error).message}`, (error as Error).stack);
-            throw error;
+        const template = templates[templateFn as MailTemplateKey];
+        if (!template) {
+            throw new Error(`Unknown mail template: ${templateFn}`);
         }
+
+        const html = await render(template(props), { plainText: false });
+
+        await this.resendProvider.sendMail({
+            to: email,
+            subject,
+            html,
+        });
+
+        this.logger.log(`Email sent to ${email}`);
     }
 }
