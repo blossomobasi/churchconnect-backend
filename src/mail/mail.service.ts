@@ -4,52 +4,50 @@ import { MailQueue } from "./mail.processor";
 import { render } from "@react-email/render";
 import { ConfigService } from "@nestjs/config";
 import { Injectable, Logger } from "@nestjs/common";
-import { ISendMailOptions, MailerService } from "@nestjs-modules/mailer";
-import { WelcomeMail, WelcomeMailProps } from "./templates/v1/welcome";
-import { PasswordResetOtp, PasswordResetOtpProps } from "./templates/v1/passwordResetOtp";
-import { VerificationOtp, VerificationOtpProps } from "./templates/v1/verificationOtp";
+import { WelcomeMail } from "./templates/v1/welcome";
+import { PasswordResetOtp } from "./templates/v1/passwordResetOtp";
+import { VerificationOtp } from "./templates/v1/verificationOtp";
+import { ResendMailProvider } from "./resend.mail.provider";
+
 @Injectable()
 export class MailService {
     private logger = new Logger(MailService.name);
 
     constructor(
-        private readonly mailerService: MailerService,
+        private readonly resendProvider: ResendMailProvider,
         private readonly configService: ConfigService,
         @InjectQueue(MailQueue.name) private readonly mailQueue: Queue
     ) {}
 
-    async sendEmail<T extends Record<string, any>>(email: string, subject: string, templateFn: (props: T) => React.ReactElement, props: T): Promise<void> {
-        const options: ISendMailOptions = {
-            to: email,
-            subject: subject,
-        };
-
-        if (this.configService.get("CONFIGS.MAILER.USE_EMAIL_QUEUE")) {
+    async sendEmail<T extends Record<string, any>>(email: string, subject: string, templateFn: (props: T) => React.ReactElement, props: T) {
+        if (this.configService.get("CONFIGS.USE_EMAIL_QUEUE")) {
             await this.mailQueue.add("enqueueEmail", {
-                options,
+                email,
+                subject,
                 templateFn: templateFn.name,
                 props,
             });
-        } else {
-            const html = await render(templateFn(props), {
-                plainText: false,
-            });
-
-            options.html = html;
-
-            await this.mailerService.sendMail(options);
+            return;
         }
+
+        const html = await render(templateFn(props), { plainText: false });
+
+        await this.resendProvider.sendMail({
+            to: email,
+            subject,
+            html,
+        });
     }
 
-    async sendWelcomeEmail(email: string, name: string): Promise<void> {
-        await this.sendEmail<WelcomeMailProps>(email, "Welcome to PitchPan", WelcomeMail, { name });
+    async sendWelcomeEmail(email: string, name: string) {
+        return this.sendEmail(email, "Welcome to ChurchConnect", WelcomeMail, { name });
     }
 
-    async sendPasswordResetEmail(email: string, resetOTP: string): Promise<void> {
-        await this.sendEmail<PasswordResetOtpProps>(email, "Reset your password", PasswordResetOtp, { otp: resetOTP });
+    async sendPasswordResetEmail(email: string, otp: string) {
+        return this.sendEmail(email, "Reset your password", PasswordResetOtp, { otp });
     }
 
-    async sendEmailVerificationEmail(email: string, verificationOTP: string): Promise<void> {
-        await this.sendEmail<VerificationOtpProps>(email, "Verify your email", VerificationOtp, { otp: verificationOTP });
+    async sendEmailVerificationEmail(email: string, otp: string) {
+        return this.sendEmail(email, "Verify your email", VerificationOtp, { otp });
     }
 }

@@ -27,8 +27,8 @@ const GLOBAL_CONSTANTS = {
     // ============================================================
     APP_NAME: "ChurchConnect",
     APP_DESCRIPTION: "",
-    SUPPORT_EMAIL: "support@churchconnect.com",
-    DEFAULT_EMAIL_FROM: "ChurchConnect <no-reply@churchconnect.com>",
+    SUPPORT_EMAIL: "support@contact.blossomobasi.xyz",
+    DEFAULT_EMAIL_FROM: "ChurchConnect <no-reply@contact.blossomobasi.xyz>",
 
     PORT: process.env.PORT ? process.env.PORT : 4000,
 
@@ -99,7 +99,8 @@ const CONFIG_BUILDER = {
             SECURE: process.env.MAILER_SECURE === "true" ? true : false,
             USE_AWS_SES: process.env.MAILER_USE_AWS_SES === "true" ? true : false,
             USE_GMAIL_SMTP: process.env.MAILER_USE_GMAIL_SMTP === "true" ? true : false,
-            FROM_EMAIL: "ChurchConnect <no-reply@churchconnect.com>",
+            FROM_EMAIL: "ChurchConnect <no-reply@contact.blossomobasi.xyz>",
+            RESEND_API_KEY: process.env.RESEND_API_KEY,
         },
 
         // App Level Configs
@@ -154,7 +155,7 @@ const CONFIG_BUILDER = {
             SECURE: process.env.MAILER_SECURE === "true" ? true : false,
             USE_AWS_SES: process.env.MAILER_USE_AWS_SES === "true" ? true : false,
             USE_GMAIL_SMTP: process.env.MAILER_USE_GMAIL_SMTP === "true" ? true : false,
-            FROM_EMAIL: "PitchPan <no-reply@pitchpan.com>",
+            FROM_EMAIL: "Churchconnect <no-reply@contact.blossomobasi.xyz>",
         },
 
         // App Level Configs
