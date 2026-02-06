@@ -162,4 +162,34 @@ export class UsersService {
 
         return sanitizeUser(result);
     }
+
+    async deleteUser(userId: string): Promise<void> {
+        const user = await this.prismaService.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException("User not found");
+
+        await this.prismaService.refreshToken.deleteMany({
+            where: { userId: userId },
+        });
+
+        await this.prismaService.user.update({
+            where: { id: userId },
+            data: {
+                isActive: false,
+                deletedAt: new Date(),
+
+                // prevent unique constraint collision & remove PII
+                email: `deleted_${userId}@deleted.local`,
+            },
+        });
+    }
+
+    async restoreUser(userId: string) {
+        await this.prismaService.user.update({
+            where: { id: userId },
+            data: {
+                isActive: true,
+                deletedAt: null,
+            },
+        });
+    }
 }

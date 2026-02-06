@@ -7,7 +7,7 @@ import { MailService } from "src/mail/mail.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { PasswordResetDto, RequestPasswordResetDto } from "./dto/password-reset.dto";
 import { EmailVerificationDto, RequestEmailVerificationDto } from "./dto/email-verification.dto";
-import { BadRequestException, UnauthorizedException, HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, UnauthorizedException, HttpException, HttpStatus, Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { TokenService } from "src/token/token.service";
 import { VerifyResetOTPDto } from "./dto/verify-reset-otp.dto";
 import { VerifyEmailVerificationOTPDto } from "./dto/verify-email-verification-otp.dto";
@@ -65,6 +65,16 @@ export class AuthService {
     }
 
     async login(user: User) {
+        const dbUser = await this.prismaService.user.findUnique({ where: { id: user.id } });
+
+        if (!dbUser) {
+            throw new BadRequestException("User not found");
+        }
+
+        if (!dbUser.isActive || dbUser.deletedAt) {
+            throw new ForbiddenException("Your account has been deactivated. Please contact support.");
+        }
+
         const token = await this.tokenService.generateAuthTokens({ id: user.id, role: user.role });
         const {
             // password,

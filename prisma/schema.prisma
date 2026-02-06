@@ -64,6 +64,8 @@ model User {
   department                Department? @relation(fields: [departmentId], references: [id])
   createdAt                 DateTime    @default(now())
   updatedAt                 DateTime    @updatedAt
+  isActive  Boolean  @default(true)
+  deletedAt DateTime?
 
   refreshToken      RefreshToken[]
   sermons           Sermon[]
