@@ -97,25 +97,26 @@ export class AuthService {
             where: { email: requestEmailVerificationDto.email },
             select: { id: true, email: true, emailVerified: true },
         });
-        if (user) {
-            if (user.emailVerified) throw new HttpException("Email already verified", HttpStatus.BAD_REQUEST);
 
-            // Create 6 digit verification OTP
-            const verificationOtp = Math.floor(100000 + Math.random() * 900000);
+        if (!user) throw new NotFoundException("User not found");
 
-            const hashedOtp = await bcryptjs.hash(verificationOtp.toString(), this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
+        if (user.emailVerified) throw new HttpException("Email already verified", HttpStatus.BAD_REQUEST);
 
-            const verificationOtpExpiresAt = moment().add(10, "minutes").toDate();
+        // Create 6 digit verification OTP
+        const verificationOtp = Math.floor(100000 + Math.random() * 900000);
 
-            await this.prismaService.user.update({
-                where: { id: user.id },
-                data: { verificationOtp: hashedOtp, verificationOtpExpiresAt },
-            });
+        const hashedOtp = await bcryptjs.hash(verificationOtp.toString(), this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
 
-            await this.mailService.sendEmailVerificationEmail(user.email, verificationOtp.toString());
+        const verificationOtpExpiresAt = moment().add(10, "minutes").toDate();
 
-            return true;
-        }
+        await this.prismaService.user.update({
+            where: { id: user.id },
+            data: { verificationOtp: hashedOtp, verificationOtpExpiresAt },
+        });
+
+        await this.mailService.sendEmailVerificationEmail(user.email, verificationOtp.toString());
+
+        return true;
     }
 
     async verifyResetOTP(verifiedResetOTPDto: VerifyResetOTPDto) {
