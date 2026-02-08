@@ -21,6 +21,7 @@ import { DonationsModule } from "./donations/donations.module";
 import { PrayerRequestModule } from "./prayer-request/prayer-request.module";
 import { EventModule } from "./events/event.module";
 import { TestimonyModule } from "./testimony/testimony.module";
+import { CommandModule } from "nestjs-command";
 
 @Module({
     imports: [
@@ -51,6 +52,7 @@ import { TestimonyModule } from "./testimony/testimony.module";
             envFilePath: [".env", ".env.local"],
             load: [configuration],
         }),
+        CommandModule,
         MailModule,
         JwtModule,
         AwsModule,
