@@ -11,6 +11,7 @@ import { BadRequestException, UnauthorizedException, HttpException, HttpStatus, 
 import { TokenService } from "src/token/token.service";
 import { VerifyResetOTPDto } from "./dto/verify-reset-otp.dto";
 import { VerifyEmailVerificationOTPDto } from "./dto/verify-email-verification-otp.dto";
+import { Role } from "./enums/role.enums";
 
 @Injectable()
 export class AuthService {
@@ -62,6 +63,39 @@ export class AuthService {
         await this.requestEmailVerification({ email: user.email });
         const token = await this.tokenService.generateAuthTokens(user);
         return { user, token };
+    }
+
+    async registerAdmin(registerDto: RegisterDto) {
+        const existingUser = await this.prismaService.user.findUnique({
+            where: { email: registerDto.email },
+        });
+        if (existingUser) {
+            throw new HttpException("Email already exists", HttpStatus.BAD_REQUEST);
+        }
+
+        const users = await this.prismaService.user.findMany({
+            where: {
+                role: Role.ADMIN,
+            },
+        });
+
+        if (users.length > 0) {
+            throw new HttpException("Admin already exists", HttpStatus.BAD_REQUEST);
+        }
+
+        const passwordHash = await bcryptjs.hash(registerDto.password, this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
+        const user = await this.prismaService.user.create({
+            data: {
+                email: registerDto.email,
+                password: passwordHash,
+                firstName: registerDto.firstName,
+                lastName: registerDto.lastName,
+                role: Role.ADMIN,
+                emailVerified: true,
+                isActive: true,
+            },
+        });
+        return { user };
     }
 
     async login(user: User) {

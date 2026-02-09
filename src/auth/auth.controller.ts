@@ -33,6 +33,19 @@ export class AuthController {
         return new HttpResponse("User registered", result, HttpStatus.CREATED);
     }
 
+    @ApiOperation({ summary: "Register Admin" })
+    @ApiHttpErrorResponses()
+    @ApiHttpResponse({
+        status: 201,
+        type: AuthenticationResponseDto,
+        description: "Registers a new admin",
+    })
+    @Post("register/admin")
+    async registerAdmin(@Body() registerDto: RegisterDto) {
+        const result = await this.authService.registerAdmin(registerDto);
+        return new HttpResponse("Admin registered", result, HttpStatus.CREATED);
+    }
+
     @ApiOperation({ summary: "Login" })
     @ApiHttpErrorResponses()
     @ApiBody({ type: LoginDto })
