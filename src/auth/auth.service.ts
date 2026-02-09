@@ -65,38 +65,38 @@ export class AuthService {
         return { user, token };
     }
 
-    async registerAdmin(registerDto: RegisterDto) {
-        const existingUser = await this.prismaService.user.findUnique({
-            where: { email: registerDto.email },
-        });
-        if (existingUser) {
-            throw new HttpException("Email already exists", HttpStatus.BAD_REQUEST);
-        }
+    // async registerAdmin(registerDto: RegisterDto) {
+    //     const existingUser = await this.prismaService.user.findUnique({
+    //         where: { email: registerDto.email },
+    //     });
+    //     if (existingUser) {
+    //         throw new HttpException("Email already exists", HttpStatus.BAD_REQUEST);
+    //     }
 
-        const users = await this.prismaService.user.findMany({
-            where: {
-                role: Role.ADMIN,
-            },
-        });
+    //     const users = await this.prismaService.user.findMany({
+    //         where: {
+    //             role: Role.ADMIN,
+    //         },
+    //     });
 
-        if (users.length > 0) {
-            throw new HttpException("Admin already exists", HttpStatus.BAD_REQUEST);
-        }
+    //     if (users.length > 0) {
+    //         throw new HttpException("Admin already exists", HttpStatus.BAD_REQUEST);
+    //     }
 
-        const passwordHash = await bcryptjs.hash(registerDto.password, this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
-        const user = await this.prismaService.user.create({
-            data: {
-                email: registerDto.email,
-                password: passwordHash,
-                firstName: registerDto.firstName,
-                lastName: registerDto.lastName,
-                role: Role.ADMIN,
-                emailVerified: true,
-                isActive: true,
-            },
-        });
-        return { user };
-    }
+    //     const passwordHash = await bcryptjs.hash(registerDto.password, this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
+    //     const user = await this.prismaService.user.create({
+    //         data: {
+    //             email: registerDto.email,
+    //             password: passwordHash,
+    //             firstName: registerDto.firstName,
+    //             lastName: registerDto.lastName,
+    //             role: Role.ADMIN,
+    //             emailVerified: true,
+    //             isActive: true,
+    //         },
+    //     });
+    //     return { user };
+    // }
 
     async login(user: User) {
         const dbUser = await this.prismaService.user.findUnique({ where: { id: user.id } });
