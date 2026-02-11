@@ -3,7 +3,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { CreatePrayerRequestDto } from "./dto/create-prayer-request-dto";
 import { PaginationDto } from "src/common/dto/pagination.dto";
 import { IPaginationMeta, PageNumberPaginator } from "src/common/utils/pagination";
-import { PrayerRequest, Prisma } from "@prisma/client";
+import { PrayerRequest, Prisma, User } from "@prisma/client";
 import { GetAllPrayerRequestsFilterDto } from "./dto/get-all-prayer-request-filter-dto";
 
 @Injectable()
@@ -12,6 +12,18 @@ export class PrayerRequestService {
 
     async getAllPrayerRequests(paginationDto: PaginationDto, getAllPrayerRequestFilterDto: GetAllPrayerRequestsFilterDto): Promise<{ results: PrayerRequest[]; meta: IPaginationMeta }> {
         const query: Prisma.PrayerRequestWhereInput = {};
+
+        if (getAllPrayerRequestFilterDto.isAnswered !== undefined) {
+            query.isAnswered = getAllPrayerRequestFilterDto.isAnswered;
+        }
+
+        const paginator = new PageNumberPaginator<PrayerRequest>(this.prismaService.prayerRequest, { page: paginationDto.page, limit: paginationDto.limit }, { where: query, include: { user: { select: { id: true, firstName: true, lastName: true } } }, orderBy: { createdAt: "desc" } });
+        const { data: prayerRequests, meta } = await paginator.paginate();
+        return { results: prayerRequests, meta };
+    }
+
+    async getMyPrayerRequests(user: User, paginationDto: PaginationDto, getAllPrayerRequestFilterDto: GetAllPrayerRequestsFilterDto): Promise<{ results: PrayerRequest[]; meta: IPaginationMeta }> {
+        const query: Prisma.PrayerRequestWhereInput = { userId: user.id };
 
         if (getAllPrayerRequestFilterDto.isAnswered !== undefined) {
             query.isAnswered = getAllPrayerRequestFilterDto.isAnswered;
