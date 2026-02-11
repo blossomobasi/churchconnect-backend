@@ -1,5 +1,7 @@
+import { User } from "@prisma/client";
+
 export interface initializeTransaction {
-    email: string;
+    user: User;
     amount: number;
     reference?: string;
     callback_url?: string;
