@@ -42,6 +42,18 @@ export class PrayerRequestController {
         return new HttpResponse("Prayer requests fetched successfully", prayerRequests, HttpStatus.OK);
     }
 
+    @ApiOperation({ summary: "Get my prayer requests" })
+    @ApiHttpErrorResponses()
+    @HttpCode(HttpStatus.OK)
+    @ApiHttpResponse({ status: HttpStatus.OK, type: "PrayerRequest", isArray: true })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @Get()
+    async getMyPrayerRequests(@Req() req: Request & { user: User }, @Query() paginationDto: PaginationDto, @Query() getAllPrayerRequestFilterDto: GetAllPrayerRequestsFilterDto): Promise<HttpResponse<{ results: PrayerRequest[]; meta: IPaginationMeta }>> {
+        const prayerRequests = await this.prayerRequestService.getMyPrayerRequests(req.user, paginationDto, getAllPrayerRequestFilterDto);
+        return new HttpResponse("Prayer requests fetched successfully", prayerRequests, HttpStatus.OK);
+    }
+
     @ApiOperation({ summary: "Get prayer request" })
     @ApiHttpErrorResponses()
     @HttpCode(HttpStatus.OK)
