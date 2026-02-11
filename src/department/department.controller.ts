@@ -67,6 +67,19 @@ export class DepartmentController {
         return new HttpResponse("Users fetched successfully", department, HttpStatus.OK);
     }
 
+    @ApiOperation({ summary: "Gets department led by the user" })
+    @ApiHttpErrorResponses()
+    @HttpCode(HttpStatus.OK)
+    @ApiHttpResponse({ status: HttpStatus.OK, type: String, description: "Departments retrieved successfully" })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
+    @Get("user/:userId/led")
+    async getDepartmentsLed(@Param("userId") userId: string): Promise<HttpResponse<Department[]>> {
+        const departments = await this.departmentService.getDepartmentsLed(userId);
+        return new HttpResponse("Departments fetched successfully", departments, HttpStatus.OK);
+    }
+
     @ApiOperation({ summary: "Update a department by id" })
     @ApiHttpErrorResponses()
     @HttpCode(HttpStatus.OK)

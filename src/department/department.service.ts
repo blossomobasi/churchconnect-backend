@@ -28,6 +28,16 @@ export class DepartmentService {
         return { results: departments, meta };
     }
 
+    async getDepartmentsLed(userId: string): Promise<Department[]> {
+        const department = await this.prismaService.department.findMany({ where: { members: { some: { id: userId } } } });
+
+        if (!department || department.length === 0) {
+            throw new NotFoundException("No departments found for this user");
+        }
+
+        return department;
+    }
+
     async createDepartment(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
         return this.prismaService.department.create({ data: createDepartmentDto });
     }

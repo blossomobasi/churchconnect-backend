@@ -45,7 +45,7 @@ COPY --from=builder /usr/src/app/src/mail/templates ./src/mail/templates
 COPY --from=builder /usr/src/app/prisma ./prisma
 
 # Install only production dependencies
-RUN yarn install --frozen-lockfile --production=true
+RUN yarn install --frozen-lockfile
 ENV NODE_ENV=production \
     PORT=3000
 

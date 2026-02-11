@@ -129,4 +129,28 @@ export class UsersController {
         const result = await this.usersService.updateUserRole(userId, updateUserRoleDto);
         return new HttpResponse("User role updated successfully", result, HttpStatus.OK);
     }
+
+    @ApiOperation({ summary: "Delete user" })
+    @ApiBearerAuth()
+    @ApiHttpErrorResponses()
+    @ApiHttpResponse({ status: 200, type: Boolean, description: "Deletes a user" })
+    @Delete(":userId")
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN)
+    async deleteUser(@Param("userId") userId: string): Promise<HttpResponse<void>> {
+        const result = await this.usersService.deleteUser(userId);
+        return new HttpResponse("User deleted successfully", result, HttpStatus.OK);
+    }
+
+    @ApiOperation({ summary: "Restore user" })
+    @ApiBearerAuth()
+    @ApiHttpErrorResponses()
+    @ApiHttpResponse({ status: 200, type: Boolean, description: "Restores a user" })
+    @Patch(":userId/restore")
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN)
+    async restoreUser(@Param("userId") userId: string): Promise<HttpResponse<void>> {
+        const result = await this.usersService.restoreUser(userId);
+        return new HttpResponse("User restored successfully", result, HttpStatus.OK);
+    }
 }

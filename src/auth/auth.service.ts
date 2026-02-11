@@ -7,10 +7,11 @@ import { MailService } from "src/mail/mail.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { PasswordResetDto, RequestPasswordResetDto } from "./dto/password-reset.dto";
 import { EmailVerificationDto, RequestEmailVerificationDto } from "./dto/email-verification.dto";
-import { BadRequestException, UnauthorizedException, HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, UnauthorizedException, HttpException, HttpStatus, Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { TokenService } from "src/token/token.service";
 import { VerifyResetOTPDto } from "./dto/verify-reset-otp.dto";
 import { VerifyEmailVerificationOTPDto } from "./dto/verify-email-verification-otp.dto";
+import { Role } from "./enums/role.enums";
 
 @Injectable()
 export class AuthService {
@@ -64,7 +65,50 @@ export class AuthService {
         return { user, token };
     }
 
+    // async registerAdmin(registerDto: RegisterDto) {
+    //     const existingUser = await this.prismaService.user.findUnique({
+    //         where: { email: registerDto.email },
+    //     });
+    //     if (existingUser) {
+    //         throw new HttpException("Email already exists", HttpStatus.BAD_REQUEST);
+    //     }
+
+    //     const users = await this.prismaService.user.findMany({
+    //         where: {
+    //             role: Role.ADMIN,
+    //         },
+    //     });
+
+    //     if (users.length > 0) {
+    //         throw new HttpException("Admin already exists", HttpStatus.BAD_REQUEST);
+    //     }
+
+    //     const passwordHash = await bcryptjs.hash(registerDto.password, this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
+    //     const user = await this.prismaService.user.create({
+    //         data: {
+    //             email: registerDto.email,
+    //             password: passwordHash,
+    //             firstName: registerDto.firstName,
+    //             lastName: registerDto.lastName,
+    //             role: Role.ADMIN,
+    //             emailVerified: true,
+    //             isActive: true,
+    //         },
+    //     });
+    //     return { user };
+    // }
+
     async login(user: User) {
+        const dbUser = await this.prismaService.user.findUnique({ where: { id: user.id } });
+
+        if (!dbUser) {
+            throw new BadRequestException("User not found");
+        }
+
+        if (!dbUser.isActive || dbUser.deletedAt) {
+            throw new ForbiddenException("Your account has been deactivated. Please contact support.");
+        }
+
         const token = await this.tokenService.generateAuthTokens({ id: user.id, role: user.role });
         const {
             // password,
@@ -87,25 +131,26 @@ export class AuthService {
             where: { email: requestEmailVerificationDto.email },
             select: { id: true, email: true, emailVerified: true },
         });
-        if (user) {
-            if (user.emailVerified) throw new HttpException("Email already verified", HttpStatus.BAD_REQUEST);
 
-            // Create 6 digit verification OTP
-            const verificationOtp = Math.floor(100000 + Math.random() * 900000);
+        if (!user) throw new NotFoundException("User not found");
 
-            const hashedOtp = await bcryptjs.hash(verificationOtp.toString(), this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
+        if (user.emailVerified) throw new HttpException("Email already verified", HttpStatus.BAD_REQUEST);
 
-            const verificationOtpExpiresAt = moment().add(10, "minutes").toDate();
+        // Create 6 digit verification OTP
+        const verificationOtp = Math.floor(100000 + Math.random() * 900000);
 
-            await this.prismaService.user.update({
-                where: { id: user.id },
-                data: { verificationOtp: hashedOtp, verificationOtpExpiresAt },
-            });
+        const hashedOtp = await bcryptjs.hash(verificationOtp.toString(), this.configService.get<number>("CONFIGS.BCRYPT_SALT") as number);
 
-            await this.mailService.sendEmailVerificationEmail(user.email, verificationOtp.toString());
+        const verificationOtpExpiresAt = moment().add(10, "minutes").toDate();
 
-            return true;
-        }
+        await this.prismaService.user.update({
+            where: { id: user.id },
+            data: { verificationOtp: hashedOtp, verificationOtpExpiresAt },
+        });
+
+        await this.mailService.sendEmailVerificationEmail(user.email, verificationOtp.toString());
+
+        return true;
     }
 
     async verifyResetOTP(verifiedResetOTPDto: VerifyResetOTPDto) {

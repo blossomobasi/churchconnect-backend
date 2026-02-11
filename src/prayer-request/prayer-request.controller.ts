@@ -90,4 +90,17 @@ export class PrayerRequestController {
         const prayerRequest = await this.prayerRequestService.markPrayerRequestAsAnswered(prayerRequestId);
         return new HttpResponse("Prayer request marked as answered successfully", prayerRequest, HttpStatus.OK);
     }
+
+    @ApiOperation({ summary: "Mark prayer request as pending" })
+    @ApiHttpErrorResponses()
+    @HttpCode(HttpStatus.OK)
+    @ApiHttpResponse({ status: HttpStatus.OK, type: "PrayerRequest" })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
+    @Patch("/:prayerRequestId/mark-as-pending")
+    async markPrayerRequestAsPending(@Param("prayerRequestId") prayerRequestId: string): Promise<HttpResponse<PrayerRequest>> {
+        const prayerRequest = await this.prayerRequestService.markPrayerRequestAsPending(prayerRequestId);
+        return new HttpResponse("Prayer request marked as pending successfully", prayerRequest, HttpStatus.OK);
+    }
 }
