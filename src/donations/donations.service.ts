@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PaystackService } from "../paystack/paystack.service";
 import { CreateDonationDto } from "./dto/create-donation.dto";
-import { DonationStatus } from "@prisma/client";
+import { DonationStatus, User } from "@prisma/client";
 
 @Injectable()
 export class DonationsService {
@@ -11,16 +11,16 @@ export class DonationsService {
         private paystackService: PaystackService
     ) {}
 
-    async initializeDonation(userId: string, email: string, createDonationDto: CreateDonationDto) {
+    async initializeDonation(user: User, createDonationDto: CreateDonationDto) {
         // Convert Naira to Kobo (Paystack uses kobo)
         const amountInKobo = Math.round(createDonationDto.amount * 100);
 
         // Initialize payment with Paystack
         const paystackResponse = await this.paystackService.initializeTransaction({
-            email,
+            user,
             amount: amountInKobo,
             metadata: {
-                userId,
+                userId: user.id,
                 donationType: createDonationDto.type,
                 note: createDonationDto.note,
             },
@@ -29,7 +29,7 @@ export class DonationsService {
         // Save donation record as PENDING
         const donation = await this.prismaService.donation.create({
             data: {
-                userId,
+                userId: user.id,
                 type: createDonationDto.type,
                 amount: createDonationDto.amount,
                 reference: paystackResponse.reference,

@@ -22,7 +22,7 @@ export class DonationsController {
     @HttpCode(HttpStatus.OK)
     @Post("initialize")
     async initializeDonation(@Req() req: Request & { user: User }, @Body() createDonationDto: CreateDonationDto): Promise<HttpResponse<any>> {
-        const result = await this.donationsService.initializeDonation(req.user.id, req.user.email, createDonationDto);
+        const result = await this.donationsService.initializeDonation(req.user, createDonationDto);
         return new HttpResponse("Payment initialized. Redirect user to authorization_url", result, HttpStatus.OK);
     }
 

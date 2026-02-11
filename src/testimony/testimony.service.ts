@@ -22,6 +22,18 @@ export class TestimonyService {
         return { results: testimonies, meta };
     }
 
+    async getMyTestimonies(user: User, getTestimonyFilterDto: GetTestimonyFilterDto, paginationDto: PaginationDto): Promise<{ results: Testimony[]; meta: IPaginationMeta }> {
+        const query: Prisma.TestimonyWhereInput = { userId: user.id };
+
+        if (getTestimonyFilterDto.isApproved) {
+            query.isApproved = getTestimonyFilterDto.isApproved;
+        }
+
+        const paginator = new PageNumberPaginator<Testimony>(this.prismaService.testimony, { page: paginationDto.page, limit: paginationDto.limit }, { where: query, orderBy: { createdAt: "desc" } });
+        const { data: testimonies, meta } = await paginator.paginate();
+        return { results: testimonies, meta };
+    }
+
     async getTestimony(testimonyId: string): Promise<Testimony> {
         const testimony = await this.prismaService.testimony.findUnique({ where: { id: testimonyId } });
 

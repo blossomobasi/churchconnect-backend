@@ -42,6 +42,18 @@ export class TestimonyController {
         return new HttpResponse("Testimonies fetched successfully", testimonies, HttpStatus.OK);
     }
 
+    @ApiOperation({ summary: "Get my testimonies" })
+    @ApiHttpErrorResponses()
+    @HttpCode(HttpStatus.OK)
+    @ApiHttpResponse({ status: HttpStatus.OK, type: Object, isArray: true })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @Get("me")
+    async getMyTestimonies(@Req() req: Request & { user: User }, @Query() getTestimonyFilterDto: GetTestimonyFilterDto, @Query() paginationDto: PaginationDto): Promise<HttpResponse<{ results: Testimony[]; meta: IPaginationMeta }>> {
+        const testimonies = await this.testimonyService.getMyTestimonies(req.user, getTestimonyFilterDto, paginationDto);
+        return new HttpResponse("Testimonies fetched successfully", testimonies, HttpStatus.OK);
+    }
+
     @ApiOperation({ summary: "Get testimony by id" })
     @ApiHttpErrorResponses()
     @HttpCode(HttpStatus.OK)

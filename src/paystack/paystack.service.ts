@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios from "axios";
 import { initializeTransaction } from "./entity/paystack.entity";
+import { Role } from "src/auth/enums/role.enums";
 
 @Injectable()
 export class PaystackService {
@@ -18,10 +19,10 @@ export class PaystackService {
             const response = await axios.post(
                 `${this.paystackBaseUrl}/transaction/initialize`,
                 {
-                    email: data.email,
+                    email: data.user.email,
                     amount: data.amount,
                     reference: data.reference || this.generateReference(),
-                    callback_url: `${this.configService.get("CONFIGS.URLS.FRONTEND_BASE_URL")}/member/donations`,
+                    callback_url: `${this.configService.get("CONFIGS.URLS.FRONTEND_BASE_URL")}/${data.user.role === Role.MEMBER ? "member" : data.user.role === Role.DEPARTMENT_HEAD ? "department-head" : "admin"}/donations`,
                     metadata: data.metadata,
                 },
                 {
