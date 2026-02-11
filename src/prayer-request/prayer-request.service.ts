@@ -17,13 +17,13 @@ export class PrayerRequestService {
             query.isAnswered = getAllPrayerRequestFilterDto.isAnswered;
         }
 
-        const paginator = new PageNumberPaginator<PrayerRequest>(this.prismaService.prayerRequest, { page: paginationDto.page, limit: paginationDto.limit }, { where: query, orderBy: { createdAt: "desc" } });
+        const paginator = new PageNumberPaginator<PrayerRequest>(this.prismaService.prayerRequest, { page: paginationDto.page, limit: paginationDto.limit }, { where: query, include: { user: { select: { id: true, firstName: true, lastName: true } } }, orderBy: { createdAt: "desc" } });
         const { data: prayerRequests, meta } = await paginator.paginate();
         return { results: prayerRequests, meta };
     }
 
     async getPrayerRequest(prayerRequestId: string): Promise<PrayerRequest> {
-        const prayerRequest = await this.prismaService.prayerRequest.findUnique({ where: { id: prayerRequestId } });
+        const prayerRequest = await this.prismaService.prayerRequest.findUnique({ where: { id: prayerRequestId }, include: { user: { select: { id: true, firstName: true, lastName: true } } } });
         if (!prayerRequest) throw new NotFoundException("Prayer Request not found");
         return prayerRequest;
     }
@@ -56,5 +56,12 @@ export class PrayerRequestService {
 
         if (!prayerRequest) throw new NotFoundException("Prayer Request not found");
         return this.prismaService.prayerRequest.update({ where: { id: prayerRequestId }, data: { isAnswered: true } });
+    }
+
+    async markPrayerRequestAsPending(prayerRequestId: string): Promise<PrayerRequest> {
+        const prayerRequest = await this.prismaService.prayerRequest.findUnique({ where: { id: prayerRequestId } });
+
+        if (!prayerRequest) throw new NotFoundException("Prayer Request not found");
+        return this.prismaService.prayerRequest.update({ where: { id: prayerRequestId }, data: { isAnswered: false } });
     }
 }
